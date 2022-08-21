@@ -1,0 +1,1 @@
+# vertx-freemarker-bootsrtap-boilerplate
