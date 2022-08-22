@@ -26,7 +26,7 @@ I tried to expand this powerfull starting point with the following customization
    1. The dependency is added by [application generator](https://start.vertx.io/) if the option is selected but that was not enough because you need at least one **.ftl** file to play with
    2. I added the **boilerplate.ftl** (a Freemarker page) this is actually a kind of **importer** of Freemarker Macros leaving in other **.ftl** files (one for the head, one for the general scripts, one for the footer, etc...)
    
-4. The HTML behind the above mentioned boilerplate and relative macros is a composition of [Bootstrap5](https://getbootstrap.com/docs/5.0/getting-started/introduction/) template and this one [htmlboilerplates](https://htmlboilerplates.com/) that added JQuery but also a good starting point for the cookies code
+4. The HTML behind the above mentioned boilerplate and relative macros is a composition of [Bootstrap5](https://getbootstrap.com/docs/5.0/getting-started/introduction/) template and this one [htmlboilerplates](https://htmlboilerplates.com/) that added [jQuery](https://jquery.com/) but also a good starting point for the cookies code
 
 ## Next steps
 Share it... Done  
