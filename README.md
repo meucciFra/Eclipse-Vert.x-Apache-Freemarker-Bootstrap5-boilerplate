@@ -1,4 +1,4 @@
-# Eclipse-Vert.x-Apache-Freemarker-Bootstrap5 boilerplate of a simple Web Server
+# Eclipse-Vert.x-Apache-Freemarker-Bootstrap5 boilerplate of a simple Web Application
 
 This is intended to be a boilerplate for a (non-professional as I am) developer that decides to embrace the power of Vert.x and build a simple web application. 
 
