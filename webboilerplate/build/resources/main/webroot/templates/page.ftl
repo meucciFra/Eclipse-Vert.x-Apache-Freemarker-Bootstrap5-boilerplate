@@ -12,7 +12,7 @@
 
 
     <#-- From there, add custom scripts as required  -->
-    <script src="javascript/index.js"></script>
+    <script src="javascript/script.js"></script>
     <#-- End scripts customization  -->
 
 </@boilerplate.boilerplate>

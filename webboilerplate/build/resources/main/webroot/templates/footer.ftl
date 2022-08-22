@@ -1,7 +1,7 @@
 <#macro footer>
 <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
     <p class="col-md-4 mb-0 text-muted">© ${currentyear!"2022"} ${companyname!"Company Inc"} <br>
-        Author: ${siteauthor!"Set the Default Author"} <br>
+        Author: ${siteauthor!"meucciFra"} <br>
         <a href="mailto:${siteemail!"website@example.com"}">${siteemail!"website@example.com"}</a>
     </p>
 

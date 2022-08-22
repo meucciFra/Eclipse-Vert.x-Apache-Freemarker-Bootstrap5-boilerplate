@@ -14,8 +14,6 @@ public class WebServer extends AbstractVerticle {
     public static final Logger logger = LoggerFactory.getLogger(WebServer.class);
     private final static int PORT = 8080;
 
-
-
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
         logger.info("Starting web server deployment");
@@ -28,7 +26,7 @@ public class WebServer extends AbstractVerticle {
 
         router.get().path("/").handler(ctx->{
             JsonObject data = new JsonObject()
-                    .put("name","Francesco")
+                    .put("name","meucciFra")
                     .put("path",ctx.request().path());
             engine.render(data, "src/main/resources/webroot/templates/index.ftl",res->{
                 if(res.succeeded()){
