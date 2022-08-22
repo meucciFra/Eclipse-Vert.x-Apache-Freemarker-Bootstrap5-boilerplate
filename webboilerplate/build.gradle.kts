@@ -7,7 +7,7 @@ plugins {
   id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
-group = "net.everygroup"
+group = "webboilerplate.webboilerplate"
 version = "1.0.0-SNAPSHOT"
 
 repositories {
@@ -17,7 +17,7 @@ repositories {
 val vertxVersion = "4.3.3"
 val junitJupiterVersion = "5.7.0"
 
-val mainVerticleName = "net.everygroup.webboilerplate.MainVerticle"
+val mainVerticleName = "webboilerplate.webboilerplate.MainVerticle"
 val launcherClassName = "io.vertx.core.Launcher"
 
 val watchForChange = "src/**/*"
@@ -29,6 +29,7 @@ application {
 
 dependencies {
   implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))
+  implementation("ch.qos.logback:logback-classic:1.2.11")
   implementation("io.vertx:vertx-web")
   implementation("io.vertx:vertx-web-templ-freemarker")
   testImplementation("io.vertx:vertx-junit5")
