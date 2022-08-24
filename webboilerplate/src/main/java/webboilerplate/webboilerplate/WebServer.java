@@ -2,6 +2,7 @@ package webboilerplate.webboilerplate;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -39,9 +40,11 @@ public class WebServer extends AbstractVerticle {
 
         router.get().path("/page").handler(ctx->{
             JsonObject data = new JsonObject()
-                    .put("useragent",ctx.request().headers().get("User-Agent"))
+                    .put("useragent",ctx.request().headers().get(HttpHeaders.USER_AGENT))
                     .put("path",ctx.request().path());
-            logger.info(data.getString("useragent"));
+            ctx.request().headers().forEach((key,value)->{
+                logger.info("{}: {}",key,value);
+            });
             engine.render(data, "src/main/resources/webroot/templates/page.ftl",res->{
                 if(res.succeeded()){
                     ctx.response().end(res.result());

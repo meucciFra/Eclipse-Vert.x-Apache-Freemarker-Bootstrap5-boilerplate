@@ -3,7 +3,7 @@
 <html lang="en">
 <#import "head.ftl" as head>
 <@head.head></@head.head>
-<body>
+<body class="d-flex vh-100 min-vh-100 flex-column">
     <#-- From there, customize the page as required  -->
     <#nested>
     <#-- End of page customization  -->
