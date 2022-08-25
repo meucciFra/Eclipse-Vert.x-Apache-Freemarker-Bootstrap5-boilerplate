@@ -4,8 +4,11 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.impl.HttpRequestHead;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.spi.observability.HttpRequest;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
 import org.slf4j.Logger;
@@ -39,12 +42,7 @@ public class WebServer extends AbstractVerticle {
         });
 
         router.get().path("/page").handler(ctx->{
-            JsonObject data = new JsonObject()
-                    .put("useragent",ctx.request().headers().get(HttpHeaders.USER_AGENT))
-                    .put("path",ctx.request().path());
-            ctx.request().headers().forEach((key,value)->{
-                logger.info("{}: {}",key,value);
-            });
+            JsonObject data = getRequestEntries(ctx);
             engine.render(data, "src/main/resources/webroot/templates/page.ftl",res->{
                 if(res.succeeded()){
                     ctx.response().end(res.result());
@@ -59,5 +57,28 @@ public class WebServer extends AbstractVerticle {
 
         server.requestHandler(router).listen(PORT);
         logger.info("Web server listening on {}",PORT);
+    }
+
+    private static JsonObject getRequestEntries(RoutingContext ctx) {
+        JsonObject content = new JsonObject();
+        ctx.request().headers().forEach((key, value)->{
+            content.put(key,value);
+        });
+        content.put("RemoteHostName", ctx.request().remoteAddress().hostName());
+        content.put("RemoteHostAddress", ctx.request().remoteAddress().hostAddress());
+        content.put("RemoteHostPort", ctx.request().remoteAddress().port());
+        content.put("path", ctx.request().path());
+        ctx.request().params().forEach( (key, value)->{
+           content.put(key,value);
+        });
+        //Log all the entries
+        content.forEach(key->{
+            logger.info("{}: {}",key.getKey(),content.getString(key.getKey()));
+        });
+
+        //Set the data object to be passed to template
+        JsonObject data = new JsonObject();
+        data.put("content",content);
+        return data;
     }
 }
