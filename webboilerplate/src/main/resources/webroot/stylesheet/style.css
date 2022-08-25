@@ -8,10 +8,10 @@ body {
 }
 
 header{
-    background-color: red;
+    background-color: #D3D3D3;
 }
 main{
-    background-color: green;
+    /*background-color: green;*/
 }
 footer{
     background-color: white;

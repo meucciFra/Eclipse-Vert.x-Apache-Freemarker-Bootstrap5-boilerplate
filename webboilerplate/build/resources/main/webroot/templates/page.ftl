@@ -4,7 +4,7 @@
 
     <h1>Welcome Hello</h1>
     <br>
-    <h2>Request header parameters</h2>
+    <h2>Request parameters</h2>
         <#list content>
             <ul>
             <#items as key, value>
