@@ -2,7 +2,7 @@
 
 <@boilerplate.boilerplate>
      <header class="d-flex py-2 my-2 ps-2">
-         <p>Welcome</>
+         <p>Welcome</p>
      </header>
      <main class="d-flex flex-grow-1 align-items-center justify-content-center">
          <div>
