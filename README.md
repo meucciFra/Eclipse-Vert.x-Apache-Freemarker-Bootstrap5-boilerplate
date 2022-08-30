@@ -28,6 +28,39 @@ I tried to expand this powerfull starting point with the following customization
    
 4. The HTML behind the above mentioned boilerplate and relative macros is a composition of [Bootstrap5](https://getbootstrap.com/docs/5.0/getting-started/introduction/) template and this one [htmlboilerplates](https://htmlboilerplates.com/) that added [jQuery](https://jquery.com/) but also a good starting point for the cookies code
 
+5. Added a simple form management on a different route that should clarify how to get form variable setting up the routeter to use ```BodyHandler``` 
+   ```
+      //Configure body handler to enable multipart form data parsing
+      router.route().handler(bodyHandler);
+   ```
+   
+5. Introduced session 
+   ```
+      //Enable session
+      router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+   ``` 
+   generation and usage (see how session variable is generated in the index route and used in page route.
+
+6. Set the target and source compatibility to Java 14 to get benefits from the last Switch constructor in point below
+   ```
+      java {
+        sourceCompatibility = JavaVersion.VERSION_14
+        targetCompatibility = JavaVersion.VERSION_14
+      }   
+   ``` 
+7. Added the ResourceBundle usage for Localization with LabelsBundle.properties and LabelsBundle_it.properties to translate the welcome message in Italian if the browser first language preference is Italian
+   ```
+     //Initialize the resource Bundle for this request
+     ResourceBundle labels = null;
+     //GET THE FIRST LOCALE PREFERENCE
+     LanguageHeader language = ctx.acceptableLanguages().get(0); //GET THE FIRST PREFERENCE
+     //use Switch to get the lables translated base don Locale preference
+     labels = switch (language.tag()) {
+         case "it" -> ResourceBundle.getBundle("LabelsBundle", Locale.ITALIAN);
+         default ->ResourceBundle.getBundle("LabelsBundle", Locale.ENGLISH);
+     };
+     data.put("sitewelcome",labels.getString("site.welcome"));
+   ``` 
 ## Next steps
 Share it... Done  
 Improve it... On going
