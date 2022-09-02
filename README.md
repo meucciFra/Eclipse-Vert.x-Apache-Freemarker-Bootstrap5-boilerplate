@@ -34,21 +34,21 @@ I tried to expand this powerfull starting point with the following customization
       router.route().handler(bodyHandler);
    ```
    
-5. Introduced session 
+6. Introduced session 
    ```
       //Enable session
       router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
    ``` 
    generation and usage (see how session variable is generated in the index route and used in page route.
 
-6. Set the target and source compatibility to Java 14 to get benefits from the last Switch constructor in point below
+7. Set the target and source compatibility to Java 14 to get benefits from the last Switch constructor in point below
    ```
       java {
         sourceCompatibility = JavaVersion.VERSION_14
         targetCompatibility = JavaVersion.VERSION_14
       }   
    ``` 
-7. Added the ResourceBundle usage for Localization with LabelsBundle.properties and LabelsBundle_it.properties to translate the welcome message in Italian if the browser first language preference is Italian
+8. Added the ResourceBundle usage for Localization with LabelsBundle.properties and LabelsBundle_it.properties to translate the welcome message in Italian if the browser first language preference is Italian
    ```
      //Initialize the resource Bundle for this request
      ResourceBundle labels = null;
@@ -61,6 +61,17 @@ I tried to expand this powerfull starting point with the following customization
      };
      data.put("sitewelcome",labels.getString("site.welcome"));
    ``` 
+9. Added a localization strategy that provide the correct template based on the browser first language preference.
+   Not completely happy about the solution because I was not able to get the system working as expected... I tried to use (this) [https://stackoverflow.com/questions/23020094/freemarker-configuration-get-template-by-locale-and-template-name] from stackoverflow and use the 
+   I tried to use the implementation of (unwarp())[https://github.com/vert-x3/vertx-web/pull/1728]
+   ```
+   Configuration conf = engine.unwrap();
+   Template temp = conf.getTemplate("freemarkerlocalization",Locale.ITALIAN);
+   String localizedTemplate = temp.getSourceName(); "--> expected to be: freemarkerlocalization_it_IT, I always get: freemarkerlocalization"
+   ```
+   It is not working, and suspect is that environement is overriding the config settings. 
+   This: ```Environement env = engine.unwrap();``` not works.
+
 ## Next steps
 Share it... Done  
 Improve it... On going

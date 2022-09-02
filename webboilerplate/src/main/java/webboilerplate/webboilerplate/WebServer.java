@@ -147,6 +147,9 @@ public class WebServer extends AbstractVerticle {
         //GET THE FIRST LOCALE PREFERENCE
         LanguageHeader language = ctx.acceptableLanguages().get(0); //GET THE FIRST PREFERENCE
         /** Configuration cfg = engine.unwrap(); //this wraps the configuration but not the environement... not so good!
+         *         Configuration conf = engine.unwrap();
+         *         Template temp = conf.getTemplate("freemarkerlocalization",Locale.ITALIAN);
+         *         String localizedTemplate = temp.getSourceName(); "--> expected to be: freemarkerlocalization_it_IT, I always get: freemarkerlocalization"
          *  It seems that any trial to change locale doesn't work so I abandoned this solution in favor of the simple switch above
          */
         //use Switch to get the lables translated base don Locale preference
