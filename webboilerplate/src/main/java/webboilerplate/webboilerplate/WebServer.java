@@ -1,5 +1,8 @@
 package webboilerplate.webboilerplate;
 
+import freemarker.core.Environment;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpHeaders;
@@ -17,6 +20,8 @@ import io.vertx.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -30,11 +35,12 @@ public class WebServer extends AbstractVerticle {
     private final static String PAGE = "page.ftl";
     private final static String LOGIN = "login.ftl";
     private final static String ATTRLOC = "attributelocalization.ftl";
+    private final static String FREEMARKERLOCEN = "freemarkerlocalization_en_EN.ftl";
+    private final static String FREEMARKERLOCIT = "freemarkerlocalization_it_IT.ftl";
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
         logger.info("Starting web server deployment");
-
         //Create the Freemarker Engine
         engine = FreeMarkerTemplateEngine.create(vertx);
         //Create the HTTP Server Engine
@@ -61,7 +67,9 @@ public class WebServer extends AbstractVerticle {
         router.get().path("/login").handler(this::login);
         router.post().path("/loginForm").handler(this::loginForm);
         router.get().path("/attributelocalization").handler(this::attributeLocalization);
+        router.get().path("/freemarkerlocalization").handler(this::freemarkerlocalization);
     }
+
 
     private void index(RoutingContext ctx) {
         //Preload data with non Locale dependent values
@@ -128,9 +136,28 @@ public class WebServer extends AbstractVerticle {
             default ->ResourceBundle.getBundle("LabelsBundle", Locale.ENGLISH);
         };
         data.put("sitewelcome",labels.getString("site.welcome"));
+        data.put("value",1000010.72);
         renderWithTemplate(data,ATTRLOC,ctx);
     }
 
+    private void freemarkerlocalization(RoutingContext ctx) {
+        //Preload data with non Locale dependent values
+        JsonObject data = new JsonObject();
+        data.put("value",1000010.72);
+        //GET THE FIRST LOCALE PREFERENCE
+        LanguageHeader language = ctx.acceptableLanguages().get(0); //GET THE FIRST PREFERENCE
+        /** Configuration cfg = engine.unwrap(); //this wraps the configuration but not the environement... not so good!
+         *  It seems that any trial to change locale doesn't work so I abandoned this solution in favor of the simple switch above
+         */
+        //use Switch to get the lables translated base don Locale preference
+        String templateLocalized = switch (language.tag()) {
+            case "it" -> FREEMARKERLOCIT;
+            default -> FREEMARKERLOCEN;
+        };
+        renderWithTemplate(data,templateLocalized,ctx);
+    }
+
+    //AUX METHODS
     private static void renderWithTemplate(JsonObject data, String templateName, RoutingContext ctx) {
         engine.render(data, TEMPLATESPREFIX+ templateName, res->{
             if(res.succeeded()){

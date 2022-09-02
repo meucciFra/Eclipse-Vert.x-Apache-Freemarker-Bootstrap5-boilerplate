@@ -15,7 +15,8 @@
                 <li>Visit this page: <a href="login">login</a> to see how a simple form can be handled</li>
                 <li>Visit this page: <a href="page">Page</a> to see the list of HTTP header attributes plus some
                     additional data passed via JSON object and retrieves also the session data</li>
-                 <li>Visit this page: <a href="attributelocalization">Localized Attributes</a> to see a part of message translated in your browser first choice language</li>
+                <li>Visit this page: <a href="attributelocalization">Localized Attributes</a> to see a part of message translated in your browser first choice language</li>
+                <li>Visit this page: <a href="freemarkerlocalization">Localization with Freemarker</a> to see a page translated in your browser first choice language</li>
             </ul>
         </div>
     </main>
