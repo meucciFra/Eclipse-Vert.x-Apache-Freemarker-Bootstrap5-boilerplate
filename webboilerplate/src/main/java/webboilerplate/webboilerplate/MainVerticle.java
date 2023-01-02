@@ -12,6 +12,7 @@ public class MainVerticle extends AbstractVerticle {
     super.start();
     logger.info("Starting verticles deployment");
     vertx.deployVerticle("webboilerplate.webboilerplate.WebServer");
+    //vertx.deployVerticle("webboilerplate.webboilerplate.DBVerticle");
   }
 }
 

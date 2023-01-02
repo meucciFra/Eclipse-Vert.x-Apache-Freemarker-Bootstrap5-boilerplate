@@ -3,14 +3,25 @@ package webboilerplate.webboilerplate;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Locale;
 import java.util.Properties;
 
 public class PropertiesLoader {
 
-    private static final Properties prop = new Properties();
+    private static PropertiesLoader propertiesLoader = null;
+    private static Properties prop = null;
 
-    public static Properties loader() {
+    private PropertiesLoader(){};
+
+    public static PropertiesLoader getPropertiesLoaderInstance(){
+        if (propertiesLoader==null){
+            propertiesLoader = new PropertiesLoader();
+            prop = new Properties();
+        }
+        return propertiesLoader;
+    }
+
+
+    public Properties loader() {
         /**
          * To get the property value use .get("propertyname")
          */

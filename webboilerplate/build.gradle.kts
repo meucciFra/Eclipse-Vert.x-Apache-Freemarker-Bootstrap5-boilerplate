@@ -14,8 +14,8 @@ repositories {
   mavenCentral()
 }
 
-val vertxVersion = "4.3.3"
-val junitJupiterVersion = "5.7.0"
+val vertxVersion = "4.3.5"
+val junitJupiterVersion = "5.9.0"
 
 val mainVerticleName = "webboilerplate.webboilerplate.MainVerticle"
 val launcherClassName = "io.vertx.core.Launcher"
@@ -29,10 +29,12 @@ application {
 
 dependencies {
   implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))
-  implementation("ch.qos.logback:logback-classic:1.2.11")
-  implementation("io.vertx:vertx-web")
-  implementation("io.vertx:vertx-web-templ-freemarker")
-  testImplementation("io.vertx:vertx-junit5")
+  implementation("ch.qos.logback:logback-classic:1.4.5")
+  implementation("io.vertx:vertx-web:4.3.6")
+  implementation("io.vertx:vertx-web-templ-freemarker:4.3.6")
+  implementation("io.vertx:vertx-mysql-client:4.3.6")
+  implementation("io.vertx:vertx-auth-sql-client:4.3.6")
+  testImplementation("io.vertx:vertx-junit5:4.3.6")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
 }
 

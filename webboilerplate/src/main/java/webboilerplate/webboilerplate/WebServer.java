@@ -1,76 +1,139 @@
 package webboilerplate.webboilerplate;
 
-import freemarker.core.Environment;
-import freemarker.template.Configuration;
-import freemarker.template.Template;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.VertxContextPRNG;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
+import io.vertx.ext.auth.sqlclient.SqlAuthentication;
+import io.vertx.ext.auth.sqlclient.SqlAuthenticationOptions;
+import io.vertx.ext.auth.sqlclient.SqlAuthorizationOptions;
 import io.vertx.ext.web.LanguageHeader;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.SessionHandler;
-import io.vertx.ext.web.handler.StaticHandler;
+import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.SqlClient;
+import io.vertx.sqlclient.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.ResourceBundle;
 
 public class WebServer extends AbstractVerticle {
     public static final Logger logger = LoggerFactory.getLogger(WebServer.class);
+    private static final Properties prop = PropertiesLoader.getPropertiesLoaderInstance().loader();
     private final static int PORT = 8080;
     private final static String TEMPLATESPREFIX = "src/main/resources/webroot/templates/";
-
     private static FreeMarkerTemplateEngine engine;
     private final static String INDEX = "index.ftl";
     private final static String PAGE = "page.ftl";
     private final static String LOGIN = "login.ftl";
+    private final static String FORM = "form.ftl";
     private final static String ATTRLOC = "attributelocalization.ftl";
     private final static String FREEMARKERLOCEN = "freemarkerlocalization_en_EN.ftl";
     private final static String FREEMARKERLOCIT = "freemarkerlocalization_it_IT.ftl";
 
+    //PRIVATE PAGES
+    private final static String PRIVATE_PAGE = "private/private_page.ftl";
+
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
         logger.info("Starting web server deployment");
+
         //Create the Freemarker Engine
         engine = FreeMarkerTemplateEngine.create(vertx);
+
         //Create the HTTP Server Engine
         final HttpServer server = vertx.createHttpServer();
+
         //Create the router
         final Router router = Router.router(vertx);
-        //Create the HTTP Body Handler that is used to decode easly the POST and PUT HTTP requests
+
+        //Create the HTTP Body Handler that is used to decode easily the POST and PUT HTTP requests
         final BodyHandler bodyHandler = BodyHandler.create();
+
         //Configure body handler to enable multipart form data parsing
         router.route().handler(bodyHandler);
+
         //Configure static files
         router.route().handler(StaticHandler.create());
+
         //Start listening on the PORT specified
         server.requestHandler(router).listen(PORT);
         logger.info("Web server listening on {}",PORT);
+
         //Enable session
         router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+
+        //Enable SQL Authentication
+        SqlAuthenticationOptions authenticationOptions = new SqlAuthenticationOptions();
+        authenticationOptions.getAuthenticationQuery();
+
+        SqlAuthorizationOptions authorizationOptions = new SqlAuthorizationOptions();
+        authorizationOptions.getPermissionsQuery();
+        authorizationOptions.getRolesQuery();
+
+        //Get the SQL Client Instance (Singletone design pattern used)
+        SqlClient sqlClient = DataBase.getDatabaseInstance().getSqlClient(vertx);
+
+        //Set the authentication provider
+        SqlAuthentication authProvider = SqlAuthentication.create(sqlClient, authenticationOptions);
 
         //Handle requests:
         router.get().path("/").handler(this::index);
         router.get().path("/home").handler(this::index);
         router.get().path("/index").handler(this::index);
         router.get().path("/page").handler(this::page);
-        router.get().path("/login").handler(this::login);
-        router.post().path("/loginForm").handler(this::loginForm);
+        router.get().path("/form").handler(this::form);
+        router.post().path("/formExample").handler(this::formExample);
         router.get().path("/attributelocalization").handler(this::attributeLocalization);
         router.get().path("/freemarkerlocalization").handler(this::freemarkerlocalization);
+
+        //LOGIN WITH AUTH HANDLER PROVIDED BY vert.x api
+        router.get().path("/login").handler(this::login);
+
+        //AUTHNETICATED ROUTS
+            // Any requests to URI starting '/private/' require login
+            router.route("/private/*").handler(RedirectAuthHandler.create(authProvider, "../login"));
+            // Serve the static private pages from directory 'private'
+            router.route("/private/*").handler(StaticHandler.create().setCachingEnabled(false));
+            //router.route("/private/*").handler(StaticHandler.create().setCachingEnabled(false).setWebRoot("private"));
+
+            // Handles the actual login
+            router.route("/loginhandler").handler(FormLoginHandler.create(authProvider));
+            // Implement logout
+            router.route("/logout").handler(context -> {
+                context.clearUser();
+                // Redirect back to the index page
+                context.response().putHeader("location", "/").setStatusCode(302).end();
+            });
+            router.route("/private/private_page").handler(ctx -> {
+                // This will require a login
+                // This will have the value true
+                boolean isAuthenticated = ctx.user() != null;
+                //Render page
+                JsonObject data = new JsonObject();
+                engine.render(data, TEMPLATESPREFIX+ PRIVATE_PAGE, res->{
+                    if(res.succeeded()){
+                        ctx.response().end(res.result());
+                    }else{
+                        ctx.fail(res.cause());
+                    }
+                });
+            });
     }
 
 
+
+
+    // Methods to serve the contents under specific path
     private void index(RoutingContext ctx) {
         //Preload data with non Locale dependent values
         JsonObject data = new JsonObject();
@@ -87,7 +150,6 @@ public class WebServer extends AbstractVerticle {
         data.put("name","meucciFra").put("path",ctx.request().path());
         renderWithTemplate(data, INDEX, ctx);
     }
-
     private void page(RoutingContext ctx) {
         //Preload data with non Locale dependent values
         JsonObject data;
@@ -104,25 +166,29 @@ public class WebServer extends AbstractVerticle {
         //Put the session JsonObject in the data JsonObjcet to be displayed in the template
         renderWithTemplate(data,PAGE,ctx);
     }
-
+    private void form(RoutingContext ctx) {
+        //Preload data with non Locale dependent values
+        JsonObject data = new JsonObject();
+        renderWithTemplate(data,FORM,ctx);
+    }
+    private void formExample(RoutingContext ctx) {
+        // handle the form
+        String name = ctx.request().getParam("name");
+        String surname = ctx.request().getParam("surname");
+        String email = ctx.request().getParam("email");
+        String password = ctx.request().getParam("password");
+        String checkbox = ctx.request().getParam("checkbox");
+        logger.info("Post parameters are {},{},{}",email,password,checkbox);
+        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
+        // note the form attribute matches the html form element name.
+        ctx.response().end("Post parameters are: "+ name +" "+ surname +" "+ email +" "+ password +" "+ checkbox);
+        //TODO: do something more useful
+    }
     private void login(RoutingContext ctx) {
         //Preload data with non Locale dependent values
         JsonObject data = new JsonObject();
         renderWithTemplate(data,LOGIN,ctx);
     }
-
-    private void loginForm(RoutingContext ctx) {
-        // handle the form
-        String email = ctx.request().getParam("email");
-        String password = ctx.request().getParam("password"); //HASH THAT!
-        String checkbox = ctx.request().getParam("checkbox");
-        logger.info("Post parameters are {},{},{}",email,password,checkbox);
-        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
-        // note the form attribute matches the html form element name.
-        ctx.response().end("Post parameters are: "+ email +" "+ password +" "+ checkbox);
-        //TODO: do something more useful
-    }
-
     private void attributeLocalization(RoutingContext ctx) {
         //Preload data with non Locale dependent values
         JsonObject data = new JsonObject();
@@ -139,7 +205,6 @@ public class WebServer extends AbstractVerticle {
         data.put("value",1000010.72);
         renderWithTemplate(data,ATTRLOC,ctx);
     }
-
     private void freemarkerlocalization(RoutingContext ctx) {
         //Preload data with non Locale dependent values
         JsonObject data = new JsonObject();
@@ -160,7 +225,7 @@ public class WebServer extends AbstractVerticle {
         renderWithTemplate(data,templateLocalized,ctx);
     }
 
-    //AUX METHODS
+    //Auxiliaries Methods
     private static void renderWithTemplate(JsonObject data, String templateName, RoutingContext ctx) {
         engine.render(data, TEMPLATESPREFIX+ templateName, res->{
             if(res.succeeded()){
@@ -170,7 +235,6 @@ public class WebServer extends AbstractVerticle {
             }
         });
     }
-
     private static JsonObject getRequestEntries(RoutingContext ctx) {
         JsonObject content = new JsonObject();
         ctx.request().headers().forEach((key, value)->{
@@ -193,5 +257,4 @@ public class WebServer extends AbstractVerticle {
         data.put("content",content);
         return data;
     }
-
 }

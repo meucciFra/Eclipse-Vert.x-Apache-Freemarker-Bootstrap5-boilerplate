@@ -72,6 +72,41 @@ I tried to expand this powerfull starting point with the following customization
    It is not working, and suspect is that environement is overriding the config settings. 
    This: ```Environement env = engine.unwrap();``` not works.
 
+10. The Login (and Logout)!!! After some fights due to my poor knowledge and poor time available I've now implemented successfully the log in through the SQL Authenticator Provider (very inspiring) [https://vertx.io/docs/vertx-auth-sql-client/java/].
+    I moved important steps toward the solution implementing the DataBase Class and the DBVerticle that I used to populate the Database (P.S: I'm running the database on an original Raspberry Pie 512MB Ram :) ).
+    The DataBase and Tables shall be exactly like this to run this boilerplate... when you have the rules, you can customize.
+   ```
+   CREATE DATABASE `dbtest` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
+
+   -- dbtest.users definition
+   CREATE TABLE `users` (
+     `username` varchar(255) NOT NULL,
+     `password` varchar(255) NOT NULL,
+     PRIMARY KEY (`username`)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+   -- dbtest.roles_perms definition
+   CREATE TABLE `roles_perms` (
+   `role` varchar(255) NOT NULL,
+   `perm` varchar(255) NOT NULL,
+   PRIMARY KEY (`role`,`perm`)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+   -- dbtest.users_roles definition
+   CREATE TABLE `users_roles` (
+     `username` varchar(255) NOT NULL,
+     `role` varchar(255) NOT NULL,
+     PRIMARY KEY (`username`,`role`),
+     CONSTRAINT `users_roles_FK` FOREIGN KEY (`username`) REFERENCES `users` (`username`)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+   ```
+11. This was necessary to test a fantastic feature...Authenticated users can visit /private/* route and in particular I created a page that can be visited only if Authenticated.
+    Once the http://localhost:8080/loginhandler says: "Login successful", try navigate to: http://localhost:8080/private/private_page and you will see that you will be able to see something.
+    It is also interesting to notice that static resources available in "non-private" folders can be also used in "private" mode.
+    I need to refactor a bit the code and maybe make the navigation more elegant but concepts are there. 
+    Ah... for sure you can also logout.
+
+
 ## Next steps
 Share it... Done  
 Improve it... On going
