@@ -8,7 +8,7 @@
         <h2>You can only see this page if you are logged in!</h2>
         <br>
         <br>
-        <a href="/logout">Logout</a>
+        <h2><a href="/logout">Logout</a></h2>
         <br>
         <br>
         <h2>Can you see assets located outside private?</h2>

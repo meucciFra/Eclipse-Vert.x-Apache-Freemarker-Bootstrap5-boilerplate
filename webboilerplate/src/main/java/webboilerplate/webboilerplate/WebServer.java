@@ -5,10 +5,11 @@ import io.vertx.core.Promise;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.VertxContextPRNG;
-import io.vertx.ext.auth.authentication.AuthenticationProvider;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.authorization.*;
 import io.vertx.ext.auth.sqlclient.SqlAuthentication;
 import io.vertx.ext.auth.sqlclient.SqlAuthenticationOptions;
+import io.vertx.ext.auth.sqlclient.SqlAuthorization;
 import io.vertx.ext.auth.sqlclient.SqlAuthorizationOptions;
 import io.vertx.ext.web.LanguageHeader;
 import io.vertx.ext.web.Router;
@@ -17,14 +18,11 @@ import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
-import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.SqlClient;
-import io.vertx.sqlclient.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.ResourceBundle;
+
+import java.util.*;
 
 public class WebServer extends AbstractVerticle {
     public static final Logger logger = LoggerFactory.getLogger(WebServer.class);
@@ -72,19 +70,16 @@ public class WebServer extends AbstractVerticle {
         //Enable session
         router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
 
-        //Enable SQL Authentication
-        SqlAuthenticationOptions authenticationOptions = new SqlAuthenticationOptions();
-        authenticationOptions.getAuthenticationQuery();
-
-        SqlAuthorizationOptions authorizationOptions = new SqlAuthorizationOptions();
-        authorizationOptions.getPermissionsQuery();
-        authorizationOptions.getRolesQuery();
-
         //Get the SQL Client Instance (Singletone design pattern used)
         SqlClient sqlClient = DataBase.getDatabaseInstance().getSqlClient(vertx);
 
+        //Enable SQL Authentication & Authorization
+        SqlAuthenticationOptions authenticationOptions = new SqlAuthenticationOptions();
+        SqlAuthorizationOptions authorizationOptions = new SqlAuthorizationOptions();
         //Set the authentication provider
-        SqlAuthentication authProvider = SqlAuthentication.create(sqlClient, authenticationOptions);
+        SqlAuthentication authenticationProvider = SqlAuthentication.create(sqlClient, authenticationOptions);
+        //Set the authorization provider
+        SqlAuthorization authorizationProvider = SqlAuthorization.create(sqlClient,  authorizationOptions);
 
         //Handle requests:
         router.get().path("/").handler(this::index);
@@ -98,16 +93,15 @@ public class WebServer extends AbstractVerticle {
 
         //LOGIN WITH AUTH HANDLER PROVIDED BY vert.x api
         router.get().path("/login").handler(this::login);
-
         //AUTHNETICATED ROUTS
             // Any requests to URI starting '/private/' require login
-            router.route("/private/*").handler(RedirectAuthHandler.create(authProvider, "../login"));
+            router.route("/private/*").handler(RedirectAuthHandler.create(authenticationProvider, "../login"));
             // Serve the static private pages from directory 'private'
             router.route("/private/*").handler(StaticHandler.create().setCachingEnabled(false));
             //router.route("/private/*").handler(StaticHandler.create().setCachingEnabled(false).setWebRoot("private"));
 
             // Handles the actual login
-            router.route("/loginhandler").handler(FormLoginHandler.create(authProvider));
+            router.route("/loginhandler").handler(FormLoginHandler.create(authenticationProvider));
             // Implement logout
             router.route("/logout").handler(context -> {
                 context.clearUser();
@@ -115,18 +109,29 @@ public class WebServer extends AbstractVerticle {
                 context.response().putHeader("location", "/").setStatusCode(302).end();
             });
             router.route("/private/private_page").handler(ctx -> {
-                // This will require a login
-                // This will have the value true
-                boolean isAuthenticated = ctx.user() != null;
-                //Render page
-                JsonObject data = new JsonObject();
-                engine.render(data, TEMPLATESPREFIX+ PRIVATE_PAGE, res->{
-                    if(res.succeeded()){
-                        ctx.response().end(res.result());
-                    }else{
-                        ctx.fail(res.cause());
-                    }
-                });
+                // This will require user to be logged in
+                // This will have the value true if user is logged
+                if (ctx.user() != null){  //isAuthenticated
+                    User user = ctx.user(); //Here I have the user
+                    authorizationProvider.getAuthorizations(user).onSuccess(done -> {
+                                // cache is populated, perform query
+                                if (RoleBasedAuthorization.create("admin").match(user)) { //if the user has the role specified here for example "admin", then the RoleBasedAuthorization test passes
+                                    logger.info("User has the Admin authority");
+                                    //Render page
+                                    JsonObject data = new JsonObject();
+                                    engine.render(data, TEMPLATESPREFIX+ PRIVATE_PAGE, res->{
+                                        if(res.succeeded()){
+                                            ctx.response().end(res.result());
+                                        }else{
+                                            ctx.fail(res.cause());
+                                        }
+                                    });
+                                } else {
+                                    logger.info("User does not have the authority"); //So I decided to redirect to the home page
+                                    ctx.response().putHeader("location", "/").setStatusCode(302).end();
+                                }
+                    });
+                }
             });
     }
 

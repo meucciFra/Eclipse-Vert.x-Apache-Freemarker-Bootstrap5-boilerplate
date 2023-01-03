@@ -12,8 +12,8 @@
             <hr>
             <p>This page create also a Session and add to the session the variable <code>sessionVar1=${(session.sessionVar1)!"Session not created"}</code></p>
             <ul>
-                <li>Visit this page: <a href="form">form</a> to see how a long Form can be handled</li>
                 <li>Visit this page: <a href="login">login</a> to see how a simple Login form can be handled</li>
+                <li>Visit this page: <a href="form">form</a> to see how a long Form can be handled</li>
                 <li>Visit this page: <a href="page">Page</a> to see the list of HTTP header attributes plus some
                     additional data passed via JSON object and retrieves also the session data</li>
                 <li>Visit this page: <a href="attributelocalization">Localized Attributes</a> to see a part of message translated in your browser first choice language</li>

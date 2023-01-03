@@ -63,17 +63,18 @@ I tried to expand this powerfull starting point with the following customization
    ``` 
 9. Added a localization strategy that provide the correct template based on the browser first language preference.
    Not completely happy about the solution because I was not able to get the system working as expected... I tried to use [this](https://stackoverflow.com/questions/23020094/freemarker-configuration-get-template-by-locale-and-template-name) suggestion from stackoverflow and the 
-   the implementation of [unwarp()](https://github.com/vert-x3/vertx-web/pull/1728)
+   implementation of [unwrap()](https://github.com/vert-x3/vertx-web/pull/1728)
    ```
    Configuration conf = engine.unwrap();
    Template temp = conf.getTemplate("freemarkerlocalization",Locale.ITALIAN);
    String localizedTemplate = temp.getSourceName(); "--> expected to be: freemarkerlocalization_it_IT, I always get: freemarkerlocalization"
    ```
-   It is not working, and suspect is that environement is overwriting the config settings. 
+   It is not working, and suspect is that environment is overriding the config settings. 
    This: ```Environement env = engine.unwrap();``` not works.
 
-10. The Login (and Logout)!!! After some fights due to my poor knowledge and poor time available I've now implemented successfully the log in through the SQL Authenticator Provider (very inspiring) [https://vertx.io/docs/vertx-auth-sql-client/java/].
-    I moved important steps toward the solution implementing the DataBase Class and the DBVerticle that I used to populate the Database (P.S: I'm running the database on an original Raspberry Pie 512MB Ram :) ).
+10. Authentication! also said...the Login (and Logout). After some fights due to my poor knowledge and poor time available I've now implemented successfully the login through the SQL Authenticator Provider [very inspiring](https://vertx.io/docs/vertx-auth-sql-client/java/) and those examples [here](https://github.com/vert-x3/vertx-examples/blob/4.x/web-examples/src/main/java/io/vertx/example/web/authjdbc/Server.java)
+    and [here](https://github.com/vert-x3/vertx-examples/blob/4.x/web-examples/src/main/java/io/vertx/example/web/auth/Server.java).
+    I moved important steps toward the solution implementing the DataBase Class and the DBVerticle that I used to populate the Database (P.S: I'm running the database on an original Raspberry Pie 512MB RAM :) ).
     The DataBase and Tables shall be exactly like this to run this boilerplate... when you have the rules, you can customize.
    ```
    CREATE DATABASE `dbtest` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
@@ -104,8 +105,18 @@ I tried to expand this powerfull starting point with the following customization
     Once the http://localhost:8080/loginhandler says: "Login successful", try navigate to: http://localhost:8080/private/private_page and you will see that you will be able to see something.
     It is also interesting to notice that static resources available in "non-private" folders can be also used in "private" mode.
     I need to refactor a bit the code and maybe make the navigation more elegant but concepts are there. 
-    Ah... for sure you can also logout.
+    Ah... for sure you can also log out.
 
+12. Also, the SQLAuthorization feature works like a charm and based on the role your user has in the database, you can protect some parts of your website from unauthorized users.
+    For example, here:
+    ```
+        if (RoleBasedAuthorization.create("admin").match(user)) {
+            logger.info("User has the Admin authority");
+            //Render page
+            JsonObject data = new JsonObject();
+    ```
+    If you change "admin" (that is role given to the user "tim") to "giant" that is a role that doesn't exist, you are redirected (check my code) to the home.
+    I know it should work the way around (try to log in with a user having different authorizations) but this is easier for a quick and dirty test.
 
 ## Next steps
 Share it... Done  
