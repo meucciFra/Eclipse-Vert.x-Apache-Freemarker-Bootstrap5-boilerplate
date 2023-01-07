@@ -11,10 +11,7 @@ import io.vertx.ext.auth.sqlclient.SqlAuthentication;
 import io.vertx.ext.auth.sqlclient.SqlAuthenticationOptions;
 import io.vertx.ext.auth.sqlclient.SqlAuthorization;
 import io.vertx.ext.auth.sqlclient.SqlAuthorizationOptions;
-import io.vertx.ext.web.LanguageHeader;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.Session;
+import io.vertx.ext.web.*;
 import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
@@ -56,6 +53,10 @@ public class WebServer extends AbstractVerticle {
 
         //Create the HTTP Body Handler that is used to decode easily the POST and PUT HTTP requests
         final BodyHandler bodyHandler = BodyHandler.create();
+
+        // Setup Upload Directory and create a new one if it doesn't exist.
+        // Note that the folder is created at the same level of "src" folder
+        bodyHandler.setUploadsDirectory("uploads");
 
         //Configure body handler to enable multipart form data parsing
         router.route().handler(bodyHandler);
@@ -113,21 +114,25 @@ public class WebServer extends AbstractVerticle {
                 // This will have the value true if user is logged
                 if (ctx.user() != null){  //isAuthenticated
                     User user = ctx.user(); //Here I have the user
+                    String username = user.principal().getValue("username").toString();
                     authorizationProvider.getAuthorizations(user).onSuccess(done -> {
                                 // cache is populated, perform query
                                 if (RoleBasedAuthorization.create("admin").match(user)) { //if the user has the role specified here for example "admin", then the RoleBasedAuthorization test passes
-                                    logger.info("User has the Admin authority");
-                                    //Render page
-                                    JsonObject data = new JsonObject();
-                                    engine.render(data, TEMPLATESPREFIX+ PRIVATE_PAGE, res->{
-                                        if(res.succeeded()){
-                                            ctx.response().end(res.result());
-                                        }else{
-                                            ctx.fail(res.cause());
-                                        }
-                                    });
+                                    logger.info("User: \""+username+"\" has the admin Role");
+                                    if(PermissionBasedAuthorization.create("full_control").match(user)){
+                                        logger.info("User: \""+username+"\" has the full_control Permission");
+                                        //Render page
+                                        JsonObject data = new JsonObject();
+                                        data.put("user",username)
+                                                .put("role","admin")
+                                                .put("permission","full_control");
+                                        renderWithTemplate(data, PRIVATE_PAGE, ctx);
+                                    } else{
+                                        logger.info("User: \""+username+"\" does not have the Permission"); //So I decided to redirect to the home page
+                                        ctx.response().putHeader("location", "/").setStatusCode(302).end();
+                                    }
                                 } else {
-                                    logger.info("User does not have the authority"); //So I decided to redirect to the home page
+                                    logger.info("User: \""+username+"\" does not have the Role"); //So I decided to redirect to the home page
                                     ctx.response().putHeader("location", "/").setStatusCode(302).end();
                                 }
                     });
@@ -172,11 +177,15 @@ public class WebServer extends AbstractVerticle {
         renderWithTemplate(data,PAGE,ctx);
     }
     private void form(RoutingContext ctx) {
+
         //Preload data with non Locale dependent values
         JsonObject data = new JsonObject();
         renderWithTemplate(data,FORM,ctx);
     }
     private void formExample(RoutingContext ctx) {
+        //Set to use HTTP chunked encoding (when having to deal with file upload)
+        ctx.response().setChunked(true);
+
         // handle the form
         String name = ctx.request().getParam("name");
         String surname = ctx.request().getParam("surname");
@@ -186,12 +195,32 @@ public class WebServer extends AbstractVerticle {
         logger.info("Post parameters are {},{},{}",email,password,checkbox);
         ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/plain");
         // note the form attribute matches the html form element name.
-        ctx.response().end("Post parameters are: "+ name +" "+ surname +" "+ email +" "+ password +" "+ checkbox);
+
+        // handle the file(s)
+        for (FileUpload f : ctx.fileUploads()) {
+            logger.info("file");
+            ctx.response().write("Filename: " + f.fileName());
+            ctx.response().write("\n");
+            ctx.response().write("Size: " + f.size());
+            ctx.response().write("\n");
+        }
+
+        ctx.response().end("Other Post parameters are: "+ name +" "+ surname +" "+ email +" "+ password +" "+ checkbox);
         //TODO: do something more useful
     }
     private void login(RoutingContext ctx) {
+        ResourceBundle labels = null;
+        //GET THE FIRST LOCALE PREFERENCE
+        LanguageHeader language = ctx.acceptableLanguages().get(0); //GET THE FIRST PREFERENCE
+        //use Switch to get the lables translated base don Locale preference
+        labels = switch (language.tag()) {
+            case "it" -> ResourceBundle.getBundle("LabelsBundle", Locale.ITALIAN);
+            default ->ResourceBundle.getBundle("LabelsBundle", Locale.ENGLISH);
+        };
         //Preload data with non Locale dependent values
         JsonObject data = new JsonObject();
+        data.put("sitesignin",labels.getString("site.signin"))
+                .put("sitesignup",labels.getString("site.signup"));
         renderWithTemplate(data,LOGIN,ctx);
     }
     private void attributeLocalization(RoutingContext ctx) {

@@ -5,7 +5,13 @@
          <p>Welcome</p>
      </header>
      <main>
-        <h2>You can only see this page if you are logged in!</h2>
+        <h2>You can only see this page if you are Authenticated & Authorized having:
+            <ul>
+                <li> User: <i>${(user)!"username"}</i></li>
+                <li> Role: <i>${(role)!"role"}</i></li>
+                <li> Permission: <i>${(permission)!"permission"}</i></li>
+            </ul>
+        </h2>
         <br>
         <br>
         <h2><a href="/logout">Logout</a></h2>

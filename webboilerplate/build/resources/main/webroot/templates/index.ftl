@@ -18,6 +18,7 @@
                     additional data passed via JSON object and retrieves also the session data</li>
                 <li>Visit this page: <a href="attributelocalization">Localized Attributes</a> to see a part of message translated in your browser first choice language</li>
                 <li>Visit this page: <a href="freemarkerlocalization">Localization with Freemarker</a> to see a page translated in your browser first choice language</li>
+                <li>Visit this page: <a href="private/private_page">Private Page</a> for Authenticated & Authorized users only</li>
             </ul>
         </div>
     </main>

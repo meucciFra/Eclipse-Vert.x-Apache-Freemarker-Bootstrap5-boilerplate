@@ -107,16 +107,25 @@ I tried to expand this powerfull starting point with the following customization
     I need to refactor a bit the code and maybe make the navigation more elegant but concepts are there. 
     Ah... for sure you can also log out.
 
-12. Also, the SQLAuthorization feature works like a charm and based on the role your user has in the database, you can protect some parts of your website from unauthorized users.
+12. Also, the SQLAuthorization feature works like a charm and based on the Role and or Permission your user has in the database, you can protect some parts of your website from unauthorized users.
     For example, here:
     ```
-        if (RoleBasedAuthorization.create("admin").match(user)) {
-            logger.info("User has the Admin authority");
-            //Render page
-            JsonObject data = new JsonObject();
+    authorizationProvider.getAuthorizations(user).onSuccess(done -> {
+                if (RoleBasedAuthorization.create("admin").match(user)) {
+                    logger.info("User has the admin Role");
+                    if(PermissionBasedAuthorization.create("full_control").match(user)){
+                        logger.info("User has the full_control Permission");
     ```
     If you change "admin" (that is role given to the user "tim") to "giant" that is a role that doesn't exist, you are redirected (check my code) to the home.
     I know it should work the way around (try to log in with a user having different authorizations) but this is easier for a quick and dirty test.
+
+13. Inspired by [this](https://github.com/vert-x3/vertx-examples/blob/4.x/web-examples/src/main/java/io/vertx/example/web/upload/Server.java) I was curious to test how it works.
+    Wow! with few lines, I can upload multiple files and thanks to the method:
+    ```
+    bodyHandler.setUploadsDirectory("uploads");
+    ```
+    It set up an Upload Directory creating a new one if it doesn't exist at the same level of "src" folder having the name "uploads" as specified.
+    It also renames the files once uploaded and the ctx.fileUploads() gives file properties available for further use.  
 
 ## Next steps
 Share it... Done  

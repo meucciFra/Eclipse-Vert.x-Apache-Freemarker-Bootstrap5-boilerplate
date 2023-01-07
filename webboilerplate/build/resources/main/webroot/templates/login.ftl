@@ -18,9 +18,9 @@
                       <input type="password" class="form-control" id="password" name="password" placeholder="Password">
                       <label for="password">Password ('sausages')</label>
                     </div>
-                    <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+                    <button class="w-100 btn btn-lg btn-primary" type="submit">${sitesignin!"Sign in"}</button>
                   </form>
-             <p>Or register: <a href="page">Page</a></p>
+             <p>Or <a href="#">${sitesignup!"Sign up"}</a></p>
          </div>
      </main>
 
